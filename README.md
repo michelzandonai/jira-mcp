@@ -51,9 +51,29 @@ Antes de executar o agente, você precisa configurar suas credenciais e variáve
 
    - `JIRA_SERVER_URL`: A URL da sua instância do Jira Cloud.
    - `JIRA_USERNAME`: O email da sua conta Jira.
-   - `JIRA_API_TOKEN`: [Crie um token de API na sua conta Atlassian](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/).
-   - `GOOGLE_API_KEY`: Sua chave de API do Google para usar os modelos de IA generativa.
+   - `JIRA_API_TOKEN`: Seu token de API pessoal para autenticação. Veja como obtê-lo abaixo.
+   - `GOOGLE_API_KEY`: Sua chave de API do Google para usar os modelos de IA generativa. Veja como obtê-la abaixo.
    - `GOOGLE_MODEL`: O modelo do Google a ser utilizado (ex: `gemini-pro`, `gemini-1.5-flash`).
+
+### Obtendo as Chaves de API
+
+#### 1. Jira API Token
+Para criar seu token de API do Jira:
+
+1.  Acesse sua conta Atlassian e navegue para a seção de segurança ou clique diretamente em: [Criar um token de API](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/).
+2.  Clique em **Criar token de API**.
+3.  Dê um nome (label) para o token, por exemplo, `jira-mcp-agent`.
+4.  Copie o token gerado. **Guarde-o em um local seguro, pois você não poderá visualizá-lo novamente.**
+5.  Cole o token no seu arquivo `.env`.
+
+#### 2. Google API Key (para Gemini)
+Para obter sua chave de API do Google AI:
+
+1.  Acesse o **[Google AI Studio](https://aistudio.google.com/)**.
+2.  Faça login com sua Conta Google.
+3.  No menu à esquerda, clique em **"Obter chave de API"** (Get API key).
+4.  Clique em **"Criar chave de API em um novo projeto"** (Create API key in new project).
+5.  Copie a chave gerada e cole no seu arquivo `.env`.
 
 ## Como Usar
 
