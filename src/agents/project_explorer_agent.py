@@ -3,9 +3,8 @@ from dotenv import load_dotenv
 from jira import JIRA
 from google.adk.agents import Agent
 
-# Carrega as configurações diretamente (evita problemas de importação relativa)
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
-load_dotenv(dotenv_path=dotenv_path)
+# Importa as configurações já carregadas
+import config
 
 # Configurações
 JIRA_SERVER = os.getenv("JIRA_SERVER_URL")
@@ -59,8 +58,8 @@ def search_jira_projects(search_term: str = "") -> str:
     """
     try:
         jira_client = JIRA(
-            server=JIRA_SERVER, 
-            basic_auth=(JIRA_USERNAME, JIRA_API_TOKEN)
+            server=config.JIRA_SERVER, 
+            basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN)
         )
         
         # Busca todos os projetos disponíveis
@@ -112,8 +111,8 @@ def get_project_details(project_name_or_key: str) -> str:
     """
     try:
         jira_client = JIRA(
-            server=JIRA_SERVER, 
-            basic_auth=(JIRA_USERNAME, JIRA_API_TOKEN)
+            server=config.JIRA_SERVER, 
+            basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN)
         )
         
         project_key_or_error = _find_project_key_by_name_or_key(jira_client, project_name_or_key)

@@ -1,17 +1,22 @@
 from google.adk.agents import Agent
 
 # Importa as configurações centralizadas
-from . import config
+import config
 
 # Importa as FERRAMENTAS dos nossos módulos de especialistas
-from .agents.project_explorer_agent import search_jira_projects, get_project_details
-from .agents.issue_creator_agent import create_issue, get_issue_types
-from .agents.time_management_agent import log_work_on_issue, update_issue_estimates
+from .project_explorer_agent import search_jira_projects, get_project_details
+from .issue_creator_agent import create_issue, get_issue_types
+from .time_management_agent import log_work_on_issue, update_issue_estimates
 
 # --- Definição do Agente Mestre Central ---
 # O ADK irá procurar por uma variável no escopo global que seja uma instância de 'Agent'.
 root_agent = Agent(
-    name="jira_master_agent",
+    # Nome que aparecerá no Cursor
+    name="JiraAgent", 
+    
+    # Descrição que aparecerá no Cursor
+    description="Agente para interagir com o Jira. Permite explorar projetos, criar issues e registrar horas.",
+    
     model=config.GOOGLE_MODEL,
     tools=[
         # Ferramentas de criação e consulta de issues
@@ -26,7 +31,6 @@ root_agent = Agent(
         log_work_on_issue,
         update_issue_estimates
     ],
-    description="Agente mestre para gerenciar o Jira. Capaz de criar issues, consultar projetos, registrar horas e atualizar estimativas.",
     instruction=(
         "Sua função é ser um assistente Jira completo. Analise o pedido do usuário e escolha a ferramenta MAIS específica para a tarefa.\n"
         "1. PARA CRIAR: Use `create_issue`. Ela lida com todos os casos de criação.\n"

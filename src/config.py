@@ -1,10 +1,10 @@
 import os
 from dotenv import load_dotenv
 
-# Carrega as variáveis de ambiente do arquivo .env que deve estar na raiz do projeto 'jira_mcp_server'
-# O path é relativo a onde o script é executado, então buscamos a partir do diretório do arquivo.
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
-load_dotenv(dotenv_path=dotenv_path)
+# Carrega as variáveis de ambiente do arquivo .env.
+# Como o `cwd` é definido no mcp.json para a raiz do projeto,
+# a biblioteca encontrará o arquivo .env automaticamente.
+load_dotenv()
 
 # --- Configuração das Credenciais do Jira ---
 JIRA_SERVER = os.getenv("JIRA_SERVER_URL")

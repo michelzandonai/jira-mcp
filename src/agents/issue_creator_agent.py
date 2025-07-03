@@ -5,15 +5,8 @@ from google.adk.agents import Agent
 from datetime import datetime, date
 import re
 
-# Carrega as configurações diretamente (evita problemas de importação relativa)
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
-load_dotenv(dotenv_path=dotenv_path)
-
-# Configurações
-JIRA_SERVER = os.getenv("JIRA_SERVER_URL")
-JIRA_USERNAME = os.getenv("JIRA_USERNAME")
-JIRA_API_TOKEN = os.getenv("JIRA_API_TOKEN")
-GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemini-2.0-flash")
+# Importa as configurações já carregadas
+import config
 
 def _find_project_key_by_name_or_key(jira_client: JIRA, project_identifier: str) -> str | None:
     """
@@ -77,7 +70,7 @@ def create_issue(
         Confirmação da criação da issue com detalhes de tempo, se houver.
     """
     try:
-        jira_client = JIRA(server=JIRA_SERVER, basic_auth=(JIRA_USERNAME, JIRA_API_TOKEN))
+        jira_client = JIRA(server=config.JIRA_SERVER, basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN))
         
         project_key_or_error = _find_project_key_by_name_or_key(jira_client, project_name_or_key)
         if not project_key_or_error or "Ambiguidade encontrada" in project_key_or_error:
@@ -141,8 +134,8 @@ def get_issue_types(project_name_or_key: str) -> str:
     """
     try:
         jira_client = JIRA(
-            server=JIRA_SERVER, 
-            basic_auth=(JIRA_USERNAME, JIRA_API_TOKEN)
+            server=config.JIRA_SERVER, 
+            basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN)
         )
         
         project_key_or_error = _find_project_key_by_name_or_key(jira_client, project_name_or_key)
@@ -188,7 +181,7 @@ def update_estimates(
         Confirmação da atualização das estimativas.
     """
     try:
-        jira_client = JIRA(server=JIRA_SERVER, basic_auth=(JIRA_USERNAME, JIRA_API_TOKEN))
+        jira_client = JIRA(server=config.JIRA_SERVER, basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN))
         
         project_key_or_error = _find_project_key_by_name_or_key(jira_client, project_name_or_key)
         if not project_key_or_error or "Ambiguidade encontrada" in project_key_or_error:

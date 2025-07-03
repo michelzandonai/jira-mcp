@@ -1,19 +1,10 @@
-import os
-from dotenv import load_dotenv
 from jira import JIRA
 from google.adk.agents import Agent
 from datetime import datetime
 import dateparser
 
-# Carrega as configurações diretamente
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
-load_dotenv(dotenv_path=dotenv_path)
-
-# Configurações
-JIRA_SERVER = os.getenv("JIRA_SERVER_URL")
-JIRA_USERNAME = os.getenv("JIRA_USERNAME")
-JIRA_API_TOKEN = os.getenv("JIRA_API_TOKEN")
-GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemini-2.0-flash")
+# Importa as configurações já carregadas
+import config
 
 def log_work_on_issue(
     issue_key: str,
@@ -34,7 +25,7 @@ def log_work_on_issue(
         Confirmação do registro de tempo.
     """
     try:
-        jira_client = JIRA(server=JIRA_SERVER, basic_auth=(JIRA_USERNAME, JIRA_API_TOKEN))
+        jira_client = JIRA(server=config.JIRA_SERVER, basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN))
         
         # Tenta analisar a data em linguagem natural (ex: "hoje", "2 days ago", "15/03/2024")
         # A biblioteca dateparser lida com a conversão para um objeto datetime.
@@ -79,7 +70,7 @@ def update_issue_estimates(
         if not original_estimate and not remaining_estimate:
             return "⚠️ Nenhuma estimativa fornecida. Forneça 'original_estimate' ou 'remaining_estimate'."
 
-        jira_client = JIRA(server=JIRA_SERVER, basic_auth=(JIRA_USERNAME, JIRA_API_TOKEN))
+        jira_client = JIRA(server=config.JIRA_SERVER, basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN))
         
         timetracking_dict = {}
         if original_estimate:
