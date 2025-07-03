@@ -46,14 +46,14 @@ Antes de executar o agente, você precisa configurar suas credenciais e variáve
 
    # Configuração do Google AI
    GOOGLE_API_KEY="sua_chave_de_api_do_google"
-   GOOGLE_MODEL="gemini-1.5-flash"
+   GOOGLE_MODEL="gemini-2.5-flash"
    ```
 
    - `JIRA_SERVER_URL`: A URL da sua instância do Jira Cloud.
    - `JIRA_USERNAME`: O email da sua conta Jira.
    - `JIRA_API_TOKEN`: Seu token de API pessoal para autenticação. Veja como obtê-lo abaixo.
    - `GOOGLE_API_KEY`: Sua chave de API do Google para usar os modelos de IA generativa. Veja como obtê-la abaixo.
-   - `GOOGLE_MODEL`: O modelo do Google a ser utilizado (ex: `gemini-pro`, `gemini-1.5-flash`).
+   - `GOOGLE_MODEL`: O modelo do Google a ser utilizado (ex: `gemini-pro`, `gemini-2.5-flash`).
 
 ### Obtendo as Chaves de API
 
