@@ -72,7 +72,7 @@ def search_jira_projects(search_term: str = "") -> str:
         if search_term:
             search_term_lower = search_term.lower()
             filtered_projects = []
-            for project in projects:
+            for project in projects: 
                 if (search_term_lower in project.name.lower() or 
                     search_term_lower in project.key.lower()):
                     filtered_projects.append(project)
@@ -98,6 +98,45 @@ def search_jira_projects(search_term: str = "") -> str:
 
     except Exception as e:
         return f"Erro ao buscar projetos no Jira: {e}"
+
+def search_issues_by_summary(project_key: str, summary: str) -> str:
+    """
+    Busca por issues (tarefas) em um projeto específico do Jira pelo seu título (summary).
+
+    Args:
+        project_key: A chave exata do projeto onde a busca será realizada (ex: 'PROJ').
+        summary: O título ou parte do título da issue a ser buscada.
+
+    Returns:
+        Uma lista formatada de issues encontradas com suas chaves e títulos, ou uma mensagem se nada for encontrado.
+    """
+    try:
+        jira_client = JIRA(
+            server=config.JIRA_SERVER,
+            basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN)
+        )
+
+        # Constrói a query JQL para buscar issues no projeto com o summary correspondente
+        jql_query = f'project = "{project_key}" AND summary ~ "{summary}" ORDER BY created DESC'
+
+        # Executa a busca
+        issues = jira_client.search_issues(jql_query, maxResults=20)
+
+        if not issues:
+            return f"Nenhuma issue encontrada no projeto '{project_key}' com o título contendo '{summary}'."
+
+        # Formata a resposta
+        result = [f"Issues encontradas em '{project_key}' com o termo '{summary}':", ""]
+        for issue in issues:
+            result.append(f"• [{issue.key}] {issue.fields.summary}")
+
+        return "\n".join(result)
+
+    except Exception as e:
+        # Fornece uma mensagem de erro mais detalhada, útil para depuração
+        if "project" in str(e).lower() and "does not exist" in str(e).lower():
+            return f"❌ Erro: O projeto com a chave '{project_key}' não foi encontrado. Por favor, verifique a chave do projeto."
+        return f"❌ Erro ao buscar issues no Jira: {e}"
 
 def get_project_details(project_name_or_key: str) -> str:
     """
