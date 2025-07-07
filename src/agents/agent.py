@@ -11,6 +11,8 @@ from tools.create_issue import create_issue
 from tools.get_issue_types import get_issue_types
 from tools.log_work_on_issue import log_work_on_issue
 from tools.update_issue_estimates import update_issue_estimates
+from tools.batch_log_work import batch_log_work
+from tools.batch_create_issues import batch_create_issues
 
 # --- Definição do Agente Mestre Central ---
 # O ADK irá procurar por uma variável no escopo global que seja uma instância de 'Agent'.
@@ -23,18 +25,23 @@ root_agent = Agent(
     
     model=config.GOOGLE_MODEL,
     tools=[
+        # Ferramentas em Lote
+        batch_log_work,
+        batch_create_issues,
+        # Ferramentas Individuais
+        log_work_on_issue,
+        create_issue,
+        update_issue_estimates,
         search_jira_projects,
         get_project_details,
         search_issues_by_summary,
-        create_issue,
         get_issue_types,
-        log_work_on_issue,
-        update_issue_estimates,
     ],
     instruction=(
-        "Sua função é ser um assistente Jira. Analise o pedido do usuário e use a ferramenta apropriada.\n"
-        "- Para criar, use `create_issue`.\n"
-        "- Para modificar (registrar horas, atualizar estimativas), use `log_work_on_issue` ou `update_issue_estimates`. Forneça o nome do projeto e o nome ou chave da tarefa.\n"
-        "- Para buscar informações, use as ferramentas de busca (`search_jira_projects`, `get_project_details`, `search_issues_by_summary`). Forneça o nome do projeto ou da tarefa que deseja buscar."
+        "Sua função é ser um assistente Jira. Analise o pedido do usuário e priorize o uso de ferramentas em LOTE sempre que possível.\n"
+        "- Para registrar horas em MÚLTIPLAS tarefas de um projeto, use `batch_log_work`.\n"
+        "- Para CRIAR MÚLTIPLAS issues de uma vez (com ou sem registro de horas), use `batch_create_issues`.\n"
+        "- Para ações em UMA ÚNICA tarefa, use as ferramentas individuais (`log_work_on_issue`, `create_issue`, etc.).\n"
+        "- Para buscar informações, use as ferramentas de busca."
     )
 ) 
