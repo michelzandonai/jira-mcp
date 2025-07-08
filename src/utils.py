@@ -1,5 +1,5 @@
 import os
-from jira import JIRA
+from jira import JIRA, JIRAError
 import dateparser
 
 def find_project_by_identifier(jira_client: JIRA, identifier: str) -> tuple[str | None, str | None]:
@@ -47,6 +47,30 @@ def find_project_by_identifier(jira_client: JIRA, identifier: str) -> tuple[str 
             
     except Exception as e:
         return None, f"Erro ao buscar projeto no Jira: {e}"
+
+def get_user_account_id_by_email(jira_client: JIRA, email: str) -> tuple[str | None, str | None]:
+    """
+    Busca o accountId de um usuário no Jira pelo seu email.
+
+    Args:
+        jira_client: O cliente JIRA inicializado.
+        email: O email do usuário a ser buscado.
+
+    Returns:
+        Uma tupla (accountId, error_message).
+    """
+    try:
+        users = jira_client.search_users(query=email, maxResults=1)
+        if users:
+            return users[0].accountId, None
+        else:
+            return None, f"Usuário com email '{email}' não encontrado."
+    except JIRAError as e:
+        if e.status_code == 403:
+            return None, "O usuário configurado não tem permissão para buscar outros usuários no Jira."
+        return None, f"Erro do Jira ao buscar usuário: {e.text}"
+    except Exception as e:
+        return None, f"Erro inesperado ao buscar usuário '{email}': {e}"
 
 def find_issue_by_summary(jira_client: JIRA, project_key: str, summary: str, find_one: bool = False) -> tuple[list | str | None, str | None]:
     """
