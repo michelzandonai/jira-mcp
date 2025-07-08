@@ -1,6 +1,15 @@
 import os
 from jira import JIRA, JIRAError
 import dateparser
+import config
+import re
+
+
+def get_jira_client():
+    """Initializes and returns a JIRA client."""
+    return JIRA(
+        server=config.JIRA_SERVER, basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN)
+    )
 
 def find_project_by_identifier(jira_client: JIRA, identifier: str) -> tuple[str | None, str | None]:
     """
@@ -132,4 +141,48 @@ def log_work_for_issue(jira_client: JIRA, issue_key: str, time_spent: str, work_
         )
         return True, f"{time_spent} registrados em '{issue_key}'."
     except Exception as e:
-        return False, f"Falha ao registrar em '{issue_key}': {e}" 
+        return False, f"Falha ao registrar em '{issue_key}': {e}"
+
+def resolve_issue_identifier(jira_client: JIRA, project_key: str, issue_identifier: str) -> tuple[str | None, str | None]:
+    """
+    Resolve um identificador de issue, que pode ser uma chave (PROJ-123) ou um nome/título.
+    
+    Args:
+        jira_client: O cliente JIRA inicializado.
+        project_key: A chave do projeto onde buscar a issue.
+        issue_identifier: O identificador da issue (chave ou nome).
+    
+    Returns:
+        Uma tupla (issue_key, error_message).
+        - (issue_key, None) se a issue for encontrada.
+        - (None, "mensagem de erro") se houver erro.
+    """
+    # Se o identificador já é uma chave válida (formato PROJ-123), retorna diretamente
+    if re.match(r'^[A-Z]+-\d+$', issue_identifier.upper()):
+        return issue_identifier.upper(), None
+    
+    # Caso contrário, busca pelo nome/título
+    issue_key_found, error = find_issue_by_summary(jira_client, project_key, issue_identifier, find_one=True)
+    if error:
+        return None, f"Erro ao encontrar a issue: {error}"
+    
+    return issue_key_found, None
+
+def validate_project_access(jira_client: JIRA, project_identifier: str) -> tuple[str | None, str | None]:
+    """
+    Valida e resolve um identificador de projeto.
+    
+    Args:
+        jira_client: O cliente JIRA inicializado.
+        project_identifier: O identificador do projeto.
+    
+    Returns:
+        Uma tupla (project_key, error_message).
+        - (project_key, None) se o projeto for encontrado.
+        - (None, "mensagem de erro") se houver erro.
+    """
+    project_key, error_message = find_project_by_identifier(jira_client, project_identifier)
+    if error_message:
+        return None, f"Erro ao encontrar o projeto: {error_message}"
+    
+    return project_key, None 

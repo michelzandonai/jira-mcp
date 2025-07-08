@@ -1,5 +1,4 @@
 from jira import JIRA
-import re
 from typing import List, Dict, Any
 
 import config
@@ -10,13 +9,13 @@ def batch_log_work(project_identifier: str, work_logs: List[Dict[str, Any]]) -> 
     Registra o tempo de trabalho em um lote de issues de um único projeto.
     """
     try:
-        jira_client = JIRA(server=config.JIRA_SERVER, basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN))
+        jira_client = utils.get_jira_client()
         report = []
 
-        # Primeiro, valida o projeto uma única vez
-        project_key, proj_error = utils.find_project_by_identifier(jira_client, project_identifier)
-        if proj_error:
-            return f"❌ Erro Crítico: Projeto '{project_identifier}' não pôde ser validado. Nenhum registro processado. Motivo: {proj_error}"
+        # Validação centralizada do projeto
+        project_key, error_message = utils.validate_project_access(jira_client, project_identifier)
+        if error_message:
+            return f"❌ Erro Crítico: {error_message}. Nenhum registro processado."
 
         # Itera sobre cada registro de trabalho
         for log in work_logs:
@@ -29,14 +28,11 @@ def batch_log_work(project_identifier: str, work_logs: List[Dict[str, Any]]) -> 
                 report.append(f"❌ Falha: Item inválido, faltam dados. Item: {log}")
                 continue
 
-            # Busca a issue
-            issue_key, issue_error = utils.find_issue_by_summary(jira_client, project_key, issue_identifier, find_one=True)
-            if not re.match(r'^[A-Z]+-\d+$', str(issue_identifier).upper()):
-                if issue_error:
-                    report.append(f"❌ Falha na task '{issue_identifier}': {issue_error}")
-                    continue
-            else:
-                issue_key = issue_identifier
+            # Resolução centralizada do identificador da issue
+            issue_key, error_message = utils.resolve_issue_identifier(jira_client, project_key, issue_identifier)
+            if error_message:
+                report.append(f"❌ Falha na task '{issue_identifier}': {error_message}")
+                continue
             
             # Chama a função auxiliar para registrar o trabalho
             success, message = utils.log_work_for_issue(jira_client, issue_key, time_spent, work_start_date, work_description)

@@ -1,5 +1,4 @@
 from jira import JIRA
-import re
 import config
 import utils
 
@@ -16,20 +15,17 @@ def update_issue_estimates(
         if not original_estimate and not remaining_estimate:
             return "⚠️ Nenhuma estimativa fornecida."
 
-        jira_client = JIRA(server=config.JIRA_SERVER, basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN))
+        jira_client = utils.get_jira_client()
         
-        # Busca inteligente do projeto
-        project_key, error_message = utils.find_project_by_identifier(jira_client, project_identifier)
+        # Validação centralizada do projeto
+        project_key, error_message = utils.validate_project_access(jira_client, project_identifier)
         if error_message:
-            return f"❌ Erro ao encontrar o projeto: {error_message}"
+            return f"❌ {error_message}"
 
-        issue_key_to_update = issue_identifier
-        # Se o identificador da issue não for uma chave, busca pelo nome
-        if not re.match(r'^[A-Z]+-\d+$', issue_identifier.upper()):
-            issue_key_found, error = utils.find_issue_by_summary(jira_client, project_key, issue_identifier, find_one=True)
-            if error:
-                return f"❌ Erro ao encontrar a issue: {error}"
-            issue_key_to_update = issue_key_found
+        # Resolução centralizada do identificador da issue
+        issue_key_to_update, error_message = utils.resolve_issue_identifier(jira_client, project_key, issue_identifier)
+        if error_message:
+            return f"❌ {error_message}"
 
         timetracking_dict = {}
         if original_estimate: timetracking_dict["originalEstimate"] = original_estimate

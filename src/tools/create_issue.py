@@ -17,11 +17,11 @@ def create_issue(
     Cria uma nova issue no Jira.
     """
     try:
-        jira_client = JIRA(server=config.JIRA_SERVER, basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN))
+        jira_client = utils.get_jira_client()
         
-        project_key, error_message = utils.find_project_by_identifier(jira_client, project_name_or_key)
+        project_key, error_message = utils.validate_project_access(jira_client, project_name_or_key)
         if error_message:
-            return f"❌ Erro: {error_message}"
+            return f"❌ {error_message}"
 
         issue_dict = {
             "project": {"key": project_key},

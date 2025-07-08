@@ -15,15 +15,12 @@ def search_issues_by_summary(project_identifier: str, summary: str) -> str:
         Uma lista formatada de issues encontradas com suas chaves e títulos, ou uma mensagem se nada for encontrado.
     """
     try:
-        jira_client = JIRA(
-            server=config.JIRA_SERVER,
-            basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN)
-        )
+        jira_client = utils.get_jira_client()
 
-        # Busca inteligente do projeto
-        project_key, error_message = utils.find_project_by_identifier(jira_client, project_identifier)
+        # Validação centralizada do projeto
+        project_key, error_message = utils.validate_project_access(jira_client, project_identifier)
         if error_message:
-            return f"❌ Erro ao encontrar o projeto: {error_message}"
+            return f"❌ {error_message}"
 
         issues, error = utils.find_issue_by_summary(jira_client, project_key, summary)
         if error:

@@ -1,6 +1,7 @@
 import os
 from jira import JIRA
 import config
+import utils
 
 def search_jira_projects(search_term: str = "") -> str:
     """
@@ -13,10 +14,7 @@ def search_jira_projects(search_term: str = "") -> str:
         Lista formatada dos projetos encontrados.
     """
     try:
-        jira_client = JIRA(
-            server=config.JIRA_SERVER, 
-            basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN)
-        )
+        jira_client = utils.get_jira_client()
         
         projects = jira_client.projects()
         

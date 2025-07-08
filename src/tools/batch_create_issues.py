@@ -9,7 +9,7 @@ def batch_create_issues(issues_to_create: List[Dict[str, Any]]) -> str:
     Cria um lote de issues no Jira, com a opção de registrar tempo de trabalho na criação.
     """
     try:
-        jira_client = JIRA(server=config.JIRA_SERVER, basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN))
+        jira_client = utils.get_jira_client()
         report = []
 
         for issue_data in issues_to_create:
@@ -22,9 +22,9 @@ def batch_create_issues(issues_to_create: List[Dict[str, Any]]) -> str:
                 continue
 
             # Valida o projeto
-            project_key, proj_error = utils.find_project_by_identifier(jira_client, project_identifier)
-            if proj_error:
-                report.append(f"❌ Falha para '{summary}': {proj_error}")
+            project_key, error_message = utils.validate_project_access(jira_client, project_identifier)
+            if error_message:
+                report.append(f"❌ Falha para '{summary}': {error_message}")
                 continue
 
             # Monta o dicionário para criação

@@ -13,15 +13,12 @@ def get_project_details(project_name_or_key: str) -> str:
         Detalhes formatados do projeto incluindo descrição, lead, e componentes.
     """
     try:
-        jira_client = JIRA(
-            server=config.JIRA_SERVER, 
-            basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN)
-        )
+        jira_client = utils.get_jira_client()
         
-        project_key, error_message = utils.find_project_by_identifier(jira_client, project_name_or_key)
+        project_key, error_message = utils.validate_project_access(jira_client, project_name_or_key)
         
         if error_message:
-            return f"❌ Erro: {error_message}"
+            return f"❌ {error_message}"
         
         project = jira_client.project(project_key)
         
