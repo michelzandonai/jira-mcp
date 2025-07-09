@@ -1,72 +1,68 @@
-from jira import JIRA
-from typing import List, Dict, Any
 from jira.exceptions import JIRAError
+from pydantic import BaseModel, Field
+from google.adk.tools import FunctionTool
+from typing import List
+from src import utils
 
-import config
-import utils
+class IssueToCreate(BaseModel):
+    """Define a estrutura de uma única issue a ser criada em um lote."""
+    project_name_or_key: str = Field(description="O nome ou chave do projeto onde a issue será criada.")
+    summary: str = Field(description="O título ou resumo principal da issue.")
+    description: str = Field(description="A descrição detalhada da issue.")
+    issuetype: str = Field(default="Task", description="O tipo da issue (ex: 'Task', 'Bug'). Padrão: 'Task'.")
+    original_estimate: str = Field(default="", description="Estimativa de tempo original (ex: '2w', '1d', '4h').")
+    time_spent: str = Field(default="", description="Tempo já gasto, para ser registrado na criação (ex: '2h', '30m').")
+    work_start_date: str = Field(default="", description="Data de início do trabalho se 'time_spent' for informado. Formato: YYYY-MM-DD.")
 
-def batch_create_issues(issues_to_create: List[Dict[str, Any]]) -> str:
+class BatchCreateIssuesInput(BaseModel):
+    """Define a lista de issues para a ferramenta de criação em lote."""
+    issues_to_create: List[IssueToCreate] = Field(description="Uma lista de issues a serem criadas, cada uma com seus próprios detalhes.")
+
+def batch_create_issues_func(tool_input: BatchCreateIssuesInput) -> str:
     """
-    Cria um lote de issues no Jira, com a opção de registrar tempo de trabalho na criação.
+    Cria um lote de issues no Jira. Ideal para criar múltiplas tarefas de uma só vez.
+    Pode opcionalmente registrar tempo de trabalho em cada issue no momento da criação.
     """
     try:
         jira_client = utils.get_jira_client()
         report = []
 
-        for issue_data in issues_to_create:
-            project_identifier = issue_data.get('project_name_or_key') # Corrigido para corresponder à chamada
-            summary = issue_data.get('summary')
-            description = issue_data.get('description')
-            
-            if not all([project_identifier, summary, description]):
-                report.append(f"❌ Falha: Item inválido, faltam dados obrigatórios (projeto, título, descrição). Item: {issue_data}")
-                continue
+        if not tool_input.issues_to_create:
+            return "Nenhum item para processar. Forneça uma lista de issues em 'issues_to_create'."
 
+        for issue_data in tool_input.issues_to_create:
             # Valida o projeto
-            project_key, error_message = utils.validate_project_access(jira_client, project_identifier)
+            project_key, error_message = utils.validate_project_access(jira_client, issue_data.project_name_or_key)
             if error_message:
-                report.append(f"❌ Falha para '{summary}': {error_message}")
+                report.append(f"❌ Falha para '{issue_data.summary}': {error_message}")
                 continue
 
             # Monta o dicionário para criação
             issue_dict = {
                 "project": {"key": project_key},
-                "summary": summary,
-                "description": description,
-                "issuetype": {"name": issue_data.get("issuetype", "Task")},
+                "summary": issue_data.summary,
+                "description": issue_data.description,
+                "issuetype": {"name": issue_data.issuetype},
             }
             
-            original_estimate = issue_data.get("original_estimate")
-            remaining_estimate = issue_data.get("remaining_estimate")
-
-            if original_estimate or remaining_estimate:
-                issue_dict["timetracking"] = {}
-                if original_estimate:
-                    issue_dict["timetracking"]["originalEstimate"] = original_estimate
-                if remaining_estimate:
-                    issue_dict["timetracking"]["remainingEstimate"] = remaining_estimate
+            if issue_data.original_estimate:
+                issue_dict["timetracking"] = {"originalEstimate": issue_data.original_estimate}
 
             try:
-                # Passo 1: Criar a issue
                 new_issue = jira_client.create_issue(fields=issue_dict)
                 creation_message = f"Issue '{new_issue.key}' criada."
 
-                # Passo 2 (Reutilização): Registrar tempo, se houver
-                time_spent = issue_data.get('time_spent')
-                work_start_date = issue_data.get('work_start_date')
-
-                if time_spent and work_start_date:
-                    # A data precisa estar no formato YYYY-MM-DD
-                    if not utils.is_valid_date(work_start_date):
+                if issue_data.time_spent and issue_data.work_start_date:
+                    if not utils.is_valid_date(issue_data.work_start_date):
                         report.append(f"⚠️ Alerta: {creation_message} Mas falhou ao registrar tempo: 'work_start_date' deve estar no formato YYYY-MM-DD.")
                         continue
 
                     log_success, log_message = utils.log_work_for_issue(
                         jira_client=jira_client,
                         issue_key=new_issue.key,
-                        time_spent=time_spent,
-                        work_start_date=work_start_date,
-                        work_description=issue_data.get("description", "") # Usar descrição completa
+                        time_spent=issue_data.time_spent,
+                        work_start_date=issue_data.work_start_date,
+                        work_description=issue_data.description
                     )
                     if log_success:
                         report.append(f"✅ Sucesso: {creation_message} {log_message}")
@@ -77,11 +73,14 @@ def batch_create_issues(issues_to_create: List[Dict[str, Any]]) -> str:
 
             except JIRAError as e:
                 error_text = e.text if e.text else "Nenhuma mensagem de erro detalhada recebida."
-                report.append(f"❌ Falha ao criar issue '{summary}': {e.status_code} - {error_text}")
+                report.append(f"❌ Falha ao criar issue '{issue_data.summary}': {e.status_code} - {error_text}")
             except Exception as e:
-                report.append(f"❌ Falha ao criar issue '{summary}': {e}")
+                report.append(f"❌ Falha ao criar issue '{issue_data.summary}': {e}")
         
-        return "\n".join(report) if report else "Nenhum item para processar."
+        return "\n".join(report)
 
     except Exception as e:
-        return f"❌ Erro geral ao processar o lote de criação: {e}" 
+        return f"❌ Erro geral ao processar o lote de criação: {e}"
+
+batch_create_issues = FunctionTool(batch_create_issues_func)
+batch_create_issues.name = "batch_create_issues" 

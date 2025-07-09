@@ -1,4 +1,6 @@
 google-adk
 python-dotenv
 jira
-dateparser 
+dateparser
+fastapi
+uvicorn[standard] 

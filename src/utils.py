@@ -1,7 +1,7 @@
 import os
 from jira import JIRA, JIRAError
 import dateparser
-import config
+from . import config
 import re
 from datetime import datetime
 

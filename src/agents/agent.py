@@ -1,25 +1,25 @@
-from google.adk.agents import Agent
+from google.adk.agents import LlmAgent
 
 # Importa as configurações centralizadas
-import config
+from src import config
 
 # Importa as FERRAMENTAS dos novos módulos individuais
-from tools.search_jira_projects import search_jira_projects
-from tools.get_project_details import get_project_details
-from tools.search_issues_by_summary import search_issues_by_summary
-from tools.create_issue import create_issue
-from tools.get_issue_types import get_issue_types
-from tools.log_work_on_issue import log_work_on_issue
-from tools.update_issue_estimates import update_issue_estimates
-from tools.batch_log_work import batch_log_work
-from tools.batch_create_issues import batch_create_issues
+from src.tools.search_jira_projects import search_jira_projects
+from src.tools.get_project_details import get_project_details
+from src.tools.search_issues_by_summary import search_issues_by_summary
+from src.tools.create_issue import create_issue
+from src.tools.get_issue_types import get_issue_types
+from src.tools.log_work_on_issue import log_work_on_issue
+from src.tools.update_issue_estimates import update_issue_estimates
+from src.tools.batch_log_work import batch_log_work
+from src.tools.batch_create_issues import batch_create_issues
 
 # Importa o handler do guardrail
-from agents.guardrails import before_tool_callback_handler
+from src.agents.guardrails import before_tool_callback_handler
 
 # --- Definição do Agente Mestre Central ---
 # O ADK irá procurar por uma variável no escopo global que seja uma instância de 'Agent'.
-root_agent = Agent(
+root_agent = LlmAgent(
     # Nome que aparecerá no Cursor
     name="JiraAgent", 
     
