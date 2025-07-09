@@ -14,6 +14,9 @@ from tools.update_issue_estimates import update_issue_estimates
 from tools.batch_log_work import batch_log_work
 from tools.batch_create_issues import batch_create_issues
 
+# Importa o handler do guardrail
+from agents.guardrails import before_tool_callback_handler
+
 # --- Definição do Agente Mestre Central ---
 # O ADK irá procurar por uma variável no escopo global que seja uma instância de 'Agent'.
 root_agent = Agent(
@@ -37,6 +40,8 @@ root_agent = Agent(
         search_issues_by_summary,
         get_issue_types,
     ],
+    # Adiciona o guardrail para interceptar chamadas de ferramentas
+    before_tool_callback=before_tool_callback_handler,
     instruction=(
         "Sua função é ser um assistente Jira. Analise o pedido do usuário e priorize o uso de ferramentas em LOTE sempre que possível.\n"
         "- Para registrar horas em MÚLTIPLAS tarefas de um projeto, use `batch_log_work`.\n"

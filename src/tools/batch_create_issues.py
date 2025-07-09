@@ -1,5 +1,6 @@
 from jira import JIRA
 from typing import List, Dict, Any
+from jira.exceptions import JIRAError
 
 import config
 import utils
@@ -13,7 +14,7 @@ def batch_create_issues(issues_to_create: List[Dict[str, Any]]) -> str:
         report = []
 
         for issue_data in issues_to_create:
-            project_identifier = issue_data.get('project_identifier')
+            project_identifier = issue_data.get('project_name_or_key') # Corrigido para corresponder à chamada
             summary = issue_data.get('summary')
             description = issue_data.get('description')
             
@@ -34,8 +35,16 @@ def batch_create_issues(issues_to_create: List[Dict[str, Any]]) -> str:
                 "description": description,
                 "issuetype": {"name": issue_data.get("issuetype", "Task")},
             }
-            if issue_data.get("original_estimate"):
-                issue_dict["timetracking"] = {"originalEstimate": issue_data["original_estimate"]}
+            
+            original_estimate = issue_data.get("original_estimate")
+            remaining_estimate = issue_data.get("remaining_estimate")
+
+            if original_estimate or remaining_estimate:
+                issue_dict["timetracking"] = {}
+                if original_estimate:
+                    issue_dict["timetracking"]["originalEstimate"] = original_estimate
+                if remaining_estimate:
+                    issue_dict["timetracking"]["remainingEstimate"] = remaining_estimate
 
             try:
                 # Passo 1: Criar a issue
@@ -45,13 +54,19 @@ def batch_create_issues(issues_to_create: List[Dict[str, Any]]) -> str:
                 # Passo 2 (Reutilização): Registrar tempo, se houver
                 time_spent = issue_data.get('time_spent')
                 work_start_date = issue_data.get('work_start_date')
+
                 if time_spent and work_start_date:
+                    # A data precisa estar no formato YYYY-MM-DD
+                    if not utils.is_valid_date(work_start_date):
+                        report.append(f"⚠️ Alerta: {creation_message} Mas falhou ao registrar tempo: 'work_start_date' deve estar no formato YYYY-MM-DD.")
+                        continue
+
                     log_success, log_message = utils.log_work_for_issue(
                         jira_client=jira_client,
                         issue_key=new_issue.key,
                         time_spent=time_spent,
                         work_start_date=work_start_date,
-                        work_description=issue_data.get("work_description", "Trabalho inicial registrado na criação.")
+                        work_description=issue_data.get("description", "") # Usar descrição completa
                     )
                     if log_success:
                         report.append(f"✅ Sucesso: {creation_message} {log_message}")
@@ -60,6 +75,9 @@ def batch_create_issues(issues_to_create: List[Dict[str, Any]]) -> str:
                 else:
                     report.append(f"✅ Sucesso: {creation_message}")
 
+            except JIRAError as e:
+                error_text = e.text if e.text else "Nenhuma mensagem de erro detalhada recebida."
+                report.append(f"❌ Falha ao criar issue '{summary}': {e.status_code} - {error_text}")
             except Exception as e:
                 report.append(f"❌ Falha ao criar issue '{summary}': {e}")
         

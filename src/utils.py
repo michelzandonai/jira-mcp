@@ -3,13 +3,15 @@ from jira import JIRA, JIRAError
 import dateparser
 import config
 import re
+from datetime import datetime
 
 
 def get_jira_client():
     """Initializes and returns a JIRA client."""
-    return JIRA(
+    jira_client = JIRA(
         server=config.JIRA_SERVER, basic_auth=(config.JIRA_USERNAME, config.JIRA_API_TOKEN)
     )
+    return jira_client
 
 def find_project_by_identifier(jira_client: JIRA, identifier: str) -> tuple[str | None, str | None]:
     """
@@ -56,6 +58,14 @@ def find_project_by_identifier(jira_client: JIRA, identifier: str) -> tuple[str 
             
     except Exception as e:
         return None, f"Erro ao buscar projeto no Jira: {e}"
+
+def is_valid_date(date_string: str, format: str = '%Y-%m-%d') -> bool:
+    """Verifica se uma string de data corresponde a um formato específico."""
+    try:
+        datetime.strptime(date_string, format)
+        return True
+    except ValueError:
+        return False
 
 def get_user_account_id_by_email(jira_client: JIRA, email: str) -> tuple[str | None, str | None]:
     """
