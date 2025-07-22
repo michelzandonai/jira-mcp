@@ -20,8 +20,10 @@ from ..core.config import get_settings
 from ..agents.jira_agent import jira_agent
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from ..core.logging_config import configure_logging, get_logger
+
+configure_logging()
+logger = get_logger(__name__)
 
 
 class ConverseRequest(BaseModel):
@@ -122,7 +124,16 @@ def create_app() -> FastAPI:
             if not final_response:
                 final_response = "Desculpe, não consegui processar sua solicitação. Por favor, tente novamente."
             
-            logger.info(f"Agent response generated for session {session_id}")
+            logger.info(
+                "Resposta do agente gerada com sucesso",
+                extra={
+                    "session_id": session_id,
+                    "user_id": user_id,
+                    "message_length": len(request.message),
+                    "response_length": len(final_response),
+                    "operation": "converse"
+                }
+            )
             
             return ConverseResponse(
                 response=final_response,
@@ -130,10 +141,17 @@ def create_app() -> FastAPI:
             )
             
         except Exception as e:
-            logger.error(f"Error processing conversation: {str(e)}")
+            from ..core.error_handler import ErrorHandler
+            
+            error_response = ErrorHandler.handle_api_error(
+                error=e,
+                endpoint="/converse",
+                context={"session_id": session_id, "message_length": len(request.message)}
+            )
+            
             raise HTTPException(
-                status_code=500,
-                detail=f"Falha ao processar sua solicitação: {str(e)}"
+                status_code=error_response["status_code"],
+                detail=error_response["error"]["message"]
             )
     
     @app.get("/config", summary="Obter Configuração do Agente")

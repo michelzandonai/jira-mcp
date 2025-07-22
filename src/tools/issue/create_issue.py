@@ -4,7 +4,6 @@ Create issue tool for Jira Agent.
 This tool allows the agent to create a new issue in Jira with validation and optional worklog.
 """
 
-import logging
 from datetime import datetime
 from google.adk.tools import FunctionTool, ToolContext
 
@@ -14,8 +13,9 @@ from ...domain.models.issue import IssueCreateInput
 from ...core.exceptions import ProjectNotFoundError, JiraConnectionError
 from ...core.validation_service import ValidationService
 from ...core.error_handler import ErrorHandler
+from ...core.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def create_issue_function(tool_input: IssueCreateInput, tool_context: ToolContext = None) -> dict:

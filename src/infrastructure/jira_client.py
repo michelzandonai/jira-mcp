@@ -7,11 +7,11 @@ with proper error handling and connection management.
 
 from typing import Optional, List, Tuple, Dict, Any
 from datetime import datetime
-import logging
 from jira import JIRA, JIRAError
 from jira.resources import Issue, Project
 
 from ..core.config import get_settings
+from ..core.logging_config import get_logger
 from ..core.exceptions import (
     JiraConnectionError, 
     JiraAuthenticationError, 
@@ -21,7 +21,7 @@ from ..core.exceptions import (
 )
 from ..core.error_handler import ErrorHandler
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class JiraClientService:

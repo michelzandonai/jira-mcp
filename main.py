@@ -12,11 +12,7 @@ import logging
 # Add src to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# Configure logging - will be properly configured by logging_config module
 
 if __name__ == "__main__":
     try:
@@ -34,10 +30,10 @@ if __name__ == "__main__":
         print("")
         
         uvicorn.run(
-            app,
+            "src.api.main:app",
             host=settings.api_host,
             port=settings.api_port,
-            reload=settings.auto_reload and settings.environment == "development",
+            reload=False,  # Desabilitar reload para evitar problemas
             log_level=settings.log_level.lower()
         )
         

@@ -5,15 +5,15 @@ This tool allows the agent to search for Jira projects by name or key,
 or list all available projects.
 """
 
-import logging
 from pydantic import BaseModel, Field
 from google.adk.tools import FunctionTool, ToolContext
 
 from ...infrastructure.jira_client import get_jira_client
 from ...domain.services.project_service import ProjectService
 from ...core.exceptions import JiraConnectionError
+from ...core.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class SearchProjectsInput(BaseModel):

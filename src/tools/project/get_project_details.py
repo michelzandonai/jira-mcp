@@ -4,15 +4,15 @@ Get project details tool for Jira Agent.
 This tool allows the agent to retrieve detailed information about a specific Jira project.
 """
 
-import logging
 from pydantic import BaseModel, Field
 from google.adk.tools import FunctionTool, ToolContext
 
 from ...infrastructure.jira_client import get_jira_client
 from ...domain.services.project_service import ProjectService
 from ...core.exceptions import ProjectNotFoundError, JiraConnectionError
+from ...core.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class GetProjectDetailsInput(BaseModel):

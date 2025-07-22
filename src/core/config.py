@@ -25,30 +25,29 @@ class Settings(BaseSettings):
     
     # Google ADK Configuration
     google_api_key: str = Field(..., env="GOOGLE_API_KEY")
-    google_model: str = Field(default="gemini-2.0-flash", env="GOOGLE_MODEL")
-    google_genai_use_vertexai: bool = Field(default=False, env="GOOGLE_GENAI_USE_VERTEXAI")
-    google_cloud_project: Optional[str] = Field(default=None, env="GOOGLE_CLOUD_PROJECT")
-    google_cloud_region: Optional[str] = Field(default="us-central1", env="GOOGLE_CLOUD_REGION")
+    google_model: str = Field(..., env="GOOGLE_MODEL")
+    google_genai_use_vertexai: bool = Field(..., env="GOOGLE_GENAI_USE_VERTEXAI")
+    google_cloud_project: Optional[str] = Field(None, env="GOOGLE_CLOUD_PROJECT")
+    google_cloud_region: Optional[str] = Field(None, env="GOOGLE_CLOUD_REGION")
     
     # Application Configuration
-    app_name: str = Field(default="Jira Agent", env="APP_NAME")
-    app_version: str = Field(default="2.0.0", env="APP_VERSION")
-    environment: str = Field(default="development", env="ENVIRONMENT")
+    app_name: str = Field(..., env="APP_NAME")
+    app_version: str = Field(..., env="APP_VERSION")
+    environment: str = Field(..., env="ENVIRONMENT")
     
     # Logging Configuration
-    log_level: str = Field(default="INFO", env="LOG_LEVEL")
-    log_format: str = Field(default="json", env="LOG_FORMAT")
+    log_level: str = Field(..., env="LOG_LEVEL")
+    log_format: str = Field(..., env="LOG_FORMAT")
     
     # API Configuration
-    api_host: str = Field(default="127.0.0.1", env="API_HOST")
-    api_port: int = Field(default=8000, env="API_PORT")
-    cors_origins: str = Field(default="*", env="CORS_ORIGINS")
-    
+    api_host: str = Field(..., env="API_HOST")
+    api_port: int = Field(..., env="API_PORT")
+    cors_origins: str = Field(..., env="CORS_ORIGINS")
     
     # Development Settings
-    debug: bool = Field(default=True, env="DEBUG")
-    auto_reload: bool = Field(default=True, env="AUTO_RELOAD")
-    detailed_errors: bool = Field(default=True, env="DETAILED_ERRORS")
+    debug: bool = Field(..., env="DEBUG")
+    auto_reload: bool = Field(..., env="AUTO_RELOAD")
+    detailed_errors: bool = Field(..., env="DETAILED_ERRORS")
     
     @validator("jira_server_url")
     def validate_jira_url(cls, v):

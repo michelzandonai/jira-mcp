@@ -68,14 +68,21 @@
 
 ## 🎮 COMO USAR - Guia Rápido
 
-### 1. **Configuração Mínima**
+### 1. **Configuração Obrigatória**
 ```bash
-# 1. Configure o .env
+# 1. Copie o arquivo de exemplo
+cp .env.example .env
+
+# 2. Configure TODAS as variáveis obrigatórias no .env
+# (TODAS são obrigatórias - sistema não funciona sem elas)
 JIRA_SERVER_URL="https://sua-empresa.atlassian.net"
 JIRA_USERNAME="seu-email@empresa.com"
 JIRA_API_TOKEN="seu-token-aqui"
+GOOGLE_API_KEY="sua-chave-google"
+GOOGLE_MODEL="gemini-2.0-flash"
+# ... e mais 9 variáveis obrigatórias (ver .env.example)
 
-# 2. Execute
+# 3. Execute
 python main.py
 ```
 
@@ -134,7 +141,8 @@ curl -X POST "http://127.0.0.1:8000/converse" \
 - ❌ Operações offline
 
 ### ⚠️ **Restrições:**
-- **Dependências**: Precisa de internet (Jira API + Google ADK)
+- **Configuração**: TODAS as 14 variáveis de ambiente são obrigatórias
+- **Dependências**: Precisa de internet (Jira API + Google ADK)  
 - **Autenticação**: Só funciona com token de API válido
 - **Permissões**: Limitado às permissões do usuário no Jira
 - **Rate Limits**: Sujeito aos limites da API do Jira

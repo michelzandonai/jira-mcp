@@ -5,15 +5,15 @@ This module defines the primary agent that handles all Jira interactions
 using the proper ADK patterns and tools.
 """
 
-import logging
 from google.adk.agents import LlmAgent
 
 from ..core.config import get_settings
+from ..core.logging_config import get_logger
 from ..tools.project.search_projects import search_projects
 from ..tools.project.get_project_details import get_project_details
 from ..tools.issue.create_issue import create_issue
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def create_jira_agent() -> LlmAgent:
@@ -72,7 +72,14 @@ def create_jira_agent() -> LlmAgent:
         ]
     )
     
-    logger.info(f"Jira agent created with model: {settings.google_model}")
+    logger.info(
+        "Agente Jira criado com sucesso",
+        extra={
+            "model": settings.google_model,
+            "tools_count": len(agent.tools),
+            "environment": settings.environment
+        }
+    )
     
     return agent
 

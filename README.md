@@ -36,7 +36,7 @@ JIRA_API_TOKEN="seu-token-api"
 
 # Configuração do Google ADK
 GOOGLE_API_KEY="sua-chave-api-google"
-GOOGLE_MODEL="gemini-2.0-flash"
+GOOGLE_MODEL="gemini-2.5-flash"
 ```
 
 **Obtenha suas credenciais:**
@@ -261,3 +261,8 @@ A nova arquitetura torna fácil contribuir:
 5. Envie um pull request
 
 Para perguntas ou suporte, consulte o PROJECT_DOCUMENTATION.md para informações técnicas detalhadas.
+
+
+
+
+~/Library/Application\ Support/Claude/claude_desktop_config.json

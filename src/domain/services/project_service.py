@@ -5,15 +5,15 @@ This service handles all project-related business logic
 and coordinates with the infrastructure layer.
 """
 
-import logging
 from typing import List, Optional
 
 from ...infrastructure.jira_client import JiraClientService
 from ..models.project import ProjectModel, ProjectSummary, ProjectSearchResult
 from ...core.exceptions import ProjectNotFoundError, JiraConnectionError
 from ...core.error_handler import ErrorHandler
+from ...core.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ProjectService:
