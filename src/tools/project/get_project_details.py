@@ -27,7 +27,7 @@ class GetProjectDetailsInput(BaseModel):
     )
 
 
-def get_project_details_function(tool_input: GetProjectDetailsInput, tool_context: ToolContext = None) -> dict:
+def get_project_details_function(project_identifier: str, tool_context: ToolContext = None) -> str:
     """
     Obtém informações detalhadas sobre um projeto específico do Jira.
     
@@ -41,38 +41,39 @@ def get_project_details_function(tool_input: GetProjectDetailsInput, tool_contex
         tool_context: Contexto da ferramenta ADK
         
     Returns:
-        dict: Resposta com status e resultado da operação
+        str: Resultado formatado da operação
     """
     try:
+        logger.info(f"Getting project details for: '{project_identifier}'")
+        
         # Get Jira client and project service
         jira_client = get_jira_client()
         project_service = ProjectService(jira_client)
         
         # Get project details
-        project = project_service.get_project_by_identifier(tool_input.project_identifier)
+        project = project_service.get_project_by_identifier(project_identifier)
         
         # Format the project details for display
         formatted_details = project_service.format_project_details(project)
         
         logger.info(f"Retrieved project details for: {project.key}")
         
-        success_msg = f"✅ Project details retrieved successfully:\n\n{formatted_details}"
-        return {"status": "success", "result": success_msg}
+        return f"✅ Project details retrieved successfully:\n\n{formatted_details}"
         
     except ProjectNotFoundError as e:
         error_msg = f"❌ Project not found: {e.message}"
-        logger.warning(error_msg)
-        return {"status": "error", "error_message": error_msg}
+        logger.warning(error_msg, exc_info=True)
+        return error_msg
         
     except JiraConnectionError as e:
         error_msg = f"❌ Failed to get project details: {e.message}"
-        logger.error(error_msg)
-        return {"status": "error", "error_message": error_msg}
+        logger.error(error_msg, exc_info=True)
+        return error_msg
         
     except Exception as e:
         error_msg = f"❌ Unexpected error while getting project details: {str(e)}"
-        logger.error(error_msg)
-        return {"status": "error", "error_message": error_msg}
+        logger.error(error_msg, exc_info=True)
+        return error_msg
 
 
 # Create the FunctionTool instance

@@ -18,7 +18,7 @@ from ...core.logging_config import get_logger
 logger = get_logger(__name__)
 
 
-def create_issue_function(tool_input: IssueCreateInput, tool_context: ToolContext = None) -> dict:
+def create_issue_function(tool_input: IssueCreateInput, tool_context: ToolContext = None) -> str:
     """
     Cria uma nova issue no Jira com validação abrangente e worklog opcional.
     
@@ -38,55 +38,65 @@ def create_issue_function(tool_input: IssueCreateInput, tool_context: ToolContex
         tool_context: Contexto da ferramenta ADK
         
     Returns:
-        dict: Resposta com status e resultado da operação
+        str: Resultado formatado da operação
     """
     try:
+        # Handle both dict and IssueCreateInput objects
+        def get_field(field_name, default=None):
+            if isinstance(tool_input, dict):
+                return tool_input.get(field_name, default)
+            else:
+                return getattr(tool_input, field_name, default)
+        
         # Get Jira client and services
         jira_client = get_jira_client()
         project_service = ProjectService(jira_client)
         
         # Validate and resolve project
         try:
-            project_key = project_service.validate_project_access(tool_input.project_identifier)
+            project_key = project_service.validate_project_access(get_field('project_identifier'))
         except Exception as e:
             error_msg = ErrorHandler.handle_tool_error(
                 e, 
                 "create_issue",
-                {"project_identifier": tool_input.project_identifier}
+                {"project_identifier": get_field('project_identifier')}
             )
-            return {"status": "error", "error_message": error_msg}
+            return error_msg
         
         # Validar dados de worklog se fornecidos
-        if tool_input.time_spent:
+        time_spent = get_field('time_spent')
+        if time_spent:
             worklog_result = ValidationService.validate_worklog_data(
-                tool_input.time_spent,
-                tool_input.work_start_date or "",
-                tool_input.work_description or ""
+                time_spent,
+                get_field('work_start_date') or "",
+                get_field('work_description') or ""
             )
             if not worklog_result.is_valid:
                 validation_error = ErrorHandler.create_validation_error(
                     "worklog_data", 
-                    tool_input.time_spent, 
+                    time_spent, 
                     worklog_result.errors[0]
                 )
                 error_msg = ErrorHandler.handle_tool_error(validation_error, "create_issue")
-                return {"status": "error", "error_message": error_msg}
+                return error_msg
         
         # Prepare issue fields
         issue_fields = {
             "project": {"key": project_key},
-            "summary": tool_input.summary.strip(),
-            "description": tool_input.description.strip(),
-            "issuetype": {"name": tool_input.issue_type},
+            "summary": get_field('summary', '').strip(),
+            "description": get_field('description', '').strip(),
+            "issuetype": {"name": get_field('issue_type')},
         }
         
         # Add time tracking if estimates provided
-        if tool_input.original_estimate or tool_input.remaining_estimate:
+        original_estimate = get_field('original_estimate')
+        remaining_estimate = get_field('remaining_estimate')
+        if original_estimate or remaining_estimate:
             issue_fields["timetracking"] = {}
-            if tool_input.original_estimate:
-                issue_fields["timetracking"]["originalEstimate"] = tool_input.original_estimate
-            if tool_input.remaining_estimate:
-                issue_fields["timetracking"]["remainingEstimate"] = tool_input.remaining_estimate
+            if original_estimate:
+                issue_fields["timetracking"]["originalEstimate"] = original_estimate
+            if remaining_estimate:
+                issue_fields["timetracking"]["remainingEstimate"] = remaining_estimate
         
         # Try to assign to current user
         try:
@@ -108,16 +118,17 @@ def create_issue_function(tool_input: IssueCreateInput, tool_context: ToolContex
             success_message = f"✅ Issue {new_issue.key} created successfully!"
             
             # Add worklog if requested
-            if tool_input.time_spent:
+            if time_spent:
                 try:
-                    work_datetime = datetime.strptime(tool_input.work_start_date, '%Y-%m-%d')
+                    work_start_date = get_field('work_start_date')
+                    work_datetime = datetime.strptime(work_start_date, '%Y-%m-%d')
                     jira_client.add_worklog(
                         new_issue.key,
-                        tool_input.time_spent,
+                        time_spent,
                         work_datetime,
-                        tool_input.work_description or tool_input.description or "Work logged during issue creation"
+                        get_field('work_description') or get_field('description') or "Work logged during issue creation"
                     )
-                    success_message += f" Work logged: {tool_input.time_spent} on {tool_input.work_start_date}."
+                    success_message += f" Work logged: {time_spent} on {work_start_date}."
                     
                 except Exception as e:
                     ErrorHandler.log_warning(
@@ -131,7 +142,7 @@ def create_issue_function(tool_input: IssueCreateInput, tool_context: ToolContex
             if hasattr(new_issue, 'permalink'):
                 success_message += f"\nURL: {new_issue.permalink()}"
             
-            return {"status": "success", "result": success_message}
+            return success_message
             
         except Exception as e:
             error_msg = ErrorHandler.handle_tool_error(
@@ -139,11 +150,11 @@ def create_issue_function(tool_input: IssueCreateInput, tool_context: ToolContex
                 "create_issue",
                 {"project_key": project_key, "issue_fields": issue_fields}
             )
-            return {"status": "error", "error_message": error_msg}
+            return error_msg
         
     except Exception as e:
         error_msg = ErrorHandler.handle_tool_error(e, "create_issue")
-        return {"status": "error", "error_message": error_msg}
+        return error_msg
 
 
 # Create the FunctionTool instance

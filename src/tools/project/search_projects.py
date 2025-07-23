@@ -5,6 +5,7 @@ This tool allows the agent to search for Jira projects by name or key,
 or list all available projects.
 """
 
+from typing import Union, Dict, Any
 from pydantic import BaseModel, Field
 from google.adk.tools import FunctionTool, ToolContext
 
@@ -29,7 +30,7 @@ class SearchProjectsInput(BaseModel):
     )
 
 
-def search_projects_function(tool_input: SearchProjectsInput, tool_context: ToolContext = None) -> dict:
+def search_projects_function(search_term: str = "", tool_context: ToolContext = None) -> str:
     """
     Busca projetos do Jira ou lista todos os projetos disponíveis.
     
@@ -46,16 +47,18 @@ def search_projects_function(tool_input: SearchProjectsInput, tool_context: Tool
         tool_context: Contexto da ferramenta ADK
         
     Returns:
-        dict: Resposta com status e resultado da operação
+        str: Resultado formatado da operação
     """
     try:
+        logger.info(f"Starting project search with term: '{search_term}'")
+        
         # Get Jira client and project service
         jira_client = get_jira_client()
         project_service = ProjectService(jira_client)
         
         # Perform the search
-        search_term = tool_input.search_term.strip() if tool_input.search_term else None
-        result = project_service.search_projects(search_term)
+        search_term_clean = search_term.strip() if search_term else None
+        result = project_service.search_projects(search_term_clean)
         
         # Format the results for display
         formatted_result = project_service.format_project_list(
@@ -65,17 +68,17 @@ def search_projects_function(tool_input: SearchProjectsInput, tool_context: Tool
         
         logger.info(f"Search projects completed: {result.total_count} projects found")
         
-        return {"status": "success", "result": formatted_result}
+        return formatted_result
         
     except JiraConnectionError as e:
         error_msg = f"❌ Failed to search projects: {e.message}"
-        logger.error(error_msg)
-        return {"status": "error", "error_message": error_msg}
+        logger.error(error_msg, exc_info=True)
+        return error_msg
         
     except Exception as e:
         error_msg = f"❌ Unexpected error while searching projects: {str(e)}"
-        logger.error(error_msg)
-        return {"status": "error", "error_message": error_msg}
+        logger.error(error_msg, exc_info=True)
+        return error_msg
 
 
 # Create the FunctionTool instance

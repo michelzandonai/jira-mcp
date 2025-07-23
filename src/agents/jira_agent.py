@@ -12,6 +12,8 @@ from ..core.logging_config import get_logger
 from ..tools.project.search_projects import search_projects
 from ..tools.project.get_project_details import get_project_details
 from ..tools.issue.create_issue import create_issue
+from ..tools.issue.list_issues import list_issues  
+from ..tools.issue.add_worklog import add_worklog
 
 logger = get_logger(__name__)
 
@@ -32,7 +34,9 @@ def create_jira_agent() -> LlmAgent:
     Suas principais capacidades:
     - Buscar e explorar projetos do Jira
     - Obter informações detalhadas sobre projetos
+    - Listar issues de projetos específicos
     - Criar novas issues com validação adequada
+    - Adicionar registros de tempo de trabalho a issues existentes
     - Lidar com operações individuais e em lote
     
     Sempre priorize a segurança do usuário e integridade dos dados:
@@ -67,6 +71,8 @@ def create_jira_agent() -> LlmAgent:
             
             # Issue tools  
             create_issue,
+            list_issues,
+            add_worklog,
             
             # Additional tools will be added here as they are implemented
         ]

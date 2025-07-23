@@ -57,3 +57,55 @@ class WorklogModel(BaseModel):
         extra = "forbid"
 
 
+class WorklogCreateInput(BaseModel):
+    """
+    Input model for creating a worklog entry.
+    
+    Used when adding time tracking to existing issues.
+    """
+    
+    issue_key: str = Field(..., description="Issue key to add worklog to (e.g., 'PROJ-123')")
+    time_spent: str = Field(..., description="Time spent (e.g., '2h 30m', '1d', '4h')")
+    work_date: Optional[str] = Field(None, description="Date when work was done (YYYY-MM-DD). Defaults to today.")
+    description: Optional[str] = Field("", description="Work description/comment")
+    
+    @validator("time_spent")
+    def validate_time_spent(cls, v):
+        """Validate time spent format."""
+        if not v or not v.strip():
+            raise ValueError("Time spent cannot be empty")
+        
+        if not validate_time_format(v):
+            raise ValueError(f"Invalid time format: '{v}'. Use format like '2h 30m', '1d', '4h'")
+        
+        return v.strip()
+    
+    @validator("work_date")
+    def validate_work_date(cls, v):
+        """Validate work date format."""
+        if not v:
+            return None
+        
+        if not validate_date_format(v):
+            raise ValueError(f"Invalid date format: '{v}'. Use YYYY-MM-DD format")
+        
+        return v.strip()
+    
+    @validator("description")
+    def validate_description(cls, v):
+        """Validate worklog description."""
+        if v is None:
+            return ""
+        
+        # Limit description length
+        if len(v) > 1000:
+            return v[:997] + "..."
+        
+        return v.strip()
+    
+    class Config:
+        """Pydantic configuration."""
+        validate_assignment = True
+        extra = "forbid"
+
+

@@ -87,6 +87,7 @@ class ProjectService:
             
         except Exception as e:
             ErrorHandler.handle_service_error(e, "ProjectService", "search_projects", {"search_term": search_term})
+            raise JiraConnectionError(f"Failed to search projects: {str(e)}")
     
     def get_project_by_identifier(self, identifier: str) -> ProjectModel:
         """
@@ -113,12 +114,20 @@ class ProjectService:
             project_details = self.jira_client.get_project_details(project_key)
             
             # Convert to domain model
+            lead_id = None
+            if hasattr(project_details, 'lead') and project_details.lead:
+                lead = project_details.lead
+                if hasattr(lead, 'accountId'):
+                    lead_id = lead.accountId
+                elif hasattr(lead, 'name'):
+                    lead_id = lead.name
+            
             project_model = ProjectModel(
                 key=project_details.key,
                 name=project_details.name,
                 description=getattr(project_details, 'description', None),
                 project_type=getattr(project_details, 'projectTypeKey', None),
-                lead=getattr(project_details, 'lead', {}).get('accountId') if hasattr(project_details, 'lead') else None,
+                lead=lead_id,
                 url=getattr(project_details, 'self', None)
             )
             
@@ -130,6 +139,7 @@ class ProjectService:
             raise
         except Exception as e:
             ErrorHandler.handle_service_error(e, "ProjectService", "get_project_by_identifier", {"identifier": identifier})
+            raise JiraConnectionError(f"Failed to get project details: {str(e)}")
     
     def validate_project_access(self, identifier: str) -> str:
         """
@@ -156,6 +166,7 @@ class ProjectService:
             
         except Exception as e:
             ErrorHandler.handle_service_error(e, "ProjectService", "validate_project_access", {"identifier": identifier})
+            raise JiraConnectionError(f"Failed to validate project access: {str(e)}")
     
     def get_project_issue_types(self, project_key: str) -> List[dict]:
         """
@@ -182,6 +193,7 @@ class ProjectService:
             raise
         except Exception as e:
             ErrorHandler.handle_service_error(e, "ProjectService", "get_project_issue_types", {"project_key": project_key})
+            raise JiraConnectionError(f"Failed to get project issue types: {str(e)}")
     
     def format_project_list(self, projects: List[ProjectSummary], search_term: Optional[str] = None) -> str:
         """

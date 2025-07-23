@@ -353,6 +353,49 @@ class JiraClientService:
                 return None, f"Error searching for user: {e.text}"
         except Exception as e:
             return None, f"Unexpected error searching for user: {str(e)}"
+    
+    def get_project_issues(self, project_key: str, status_filter: Optional[str] = None, max_results: int = 50) -> List[Issue]:
+        """
+        Get issues from a specific project.
+        
+        Args:
+            project_key: The project key to get issues from
+            status_filter: Optional status to filter by (e.g., "To Do", "In Progress", "Done")
+            max_results: Maximum number of issues to return (default: 50)
+            
+        Returns:
+            List[Issue]: List of issues from the project
+            
+        Raises:
+            JiraConnectionError: If unable to fetch issues
+        """
+        try:
+            # Build JQL query
+            jql = f'project = "{project_key}"'
+            
+            if status_filter:
+                jql += f' AND status = "{status_filter}"'
+            
+            jql += ' ORDER BY created DESC'
+            
+            # Search for issues
+            issues = self.search_issues(jql, max_results=max_results)
+            
+            ErrorHandler.log_info(
+                f"Retrieved {len(issues)} issues from project {project_key}", 
+                "JiraClientService"
+            )
+            
+            return issues
+            
+        except JiraConnectionError:
+            raise
+        except Exception as e:
+            _, error_msg = ErrorHandler.handle_infrastructure_error(
+                e, "JiraClientService", "get_project_issues", 
+                {"project_key": project_key, "status_filter": status_filter}
+            )
+            raise JiraConnectionError(f"Failed to get project issues: {str(e)}")
 
 
 # Global client instance

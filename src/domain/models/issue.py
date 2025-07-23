@@ -83,6 +83,34 @@ class IssueModel(BaseModel):
         extra = "forbid"
 
 
+class IssueSummary(BaseModel):
+    """
+    Summary model for issue listings.
+    
+    Contains essential information for displaying issues in lists.
+    """
+    
+    key: str = Field(..., description="Issue key (e.g., 'PROJ-123')")
+    summary: str = Field(..., description="Issue summary/title")
+    status: Optional[str] = Field(None, description="Current issue status")
+    assignee: Optional[str] = Field(None, description="Assignee display name")
+    priority: Optional[str] = Field(None, description="Issue priority")
+    issue_type: Optional[str] = Field(None, description="Issue type")
+    created: Optional[datetime] = Field(None, description="Creation timestamp")
+    updated: Optional[datetime] = Field(None, description="Last update timestamp")
+
+
+class IssueSearchResult(BaseModel):
+    """
+    Results from issue search operations.
+    """
+    
+    issues: List[IssueSummary] = Field(default_factory=list, description="List of found issues")
+    total_count: int = Field(0, description="Total number of issues found")
+    project_key: Optional[str] = Field(None, description="Project key used in search")
+    status_filter: Optional[str] = Field(None, description="Status filter applied")
+
+
 class IssueCreateInput(
     BaseJiraModel,
     ProjectIdentifierMixin,

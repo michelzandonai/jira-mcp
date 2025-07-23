@@ -10,6 +10,8 @@ from .project.search_projects import search_projects
 from .project.get_project_details import get_project_details
 
 from .issue.create_issue import create_issue
+from .issue.list_issues import list_issues
+from .issue.add_worklog import add_worklog
 
 # List of all available tools for easy import by the agent
 ALL_TOOLS = [
@@ -19,6 +21,8 @@ ALL_TOOLS = [
     
     # Issue tools
     create_issue,
+    list_issues,
+    add_worklog,
 ]
 
 __all__ = [
@@ -28,4 +32,6 @@ __all__ = [
     "get_project_details", 
     # Issue tools
     "create_issue",
+    "list_issues",
+    "add_worklog",
 ]
