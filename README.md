@@ -265,4 +265,4 @@ Para perguntas ou suporte, consulte o PROJECT_DOCUMENTATION.md para informaçõe
 
 
 
-~/Library/Application\ Support/Claude/claude_desktop_config.json
+source venv/bin/activate && adk web --port 8001
