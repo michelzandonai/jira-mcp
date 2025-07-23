@@ -229,6 +229,55 @@ class JiraClientService:
         except Exception as e:
             return None, f"Error searching for issue: {str(e)}"
     
+    def search_issues_by_summary(self, summary: str, max_results: int = 10) -> Tuple[List[Issue], Optional[str]]:
+        """
+        Search for issues across all accessible projects by summary/title.
+        
+        Args:
+            summary: The issue summary to search for (partial matches allowed)
+            max_results: Maximum number of issues to return
+            
+        Returns:
+            Tuple[List[Issue], Optional[str]]: (matching_issues, error_message)
+        """
+        try:
+            # Use JQL to search across all projects by summary
+            jql = f'summary ~ "{summary}" ORDER BY created DESC'
+            issues = self.search_issues(jql, max_results=max_results)
+            
+            return issues, None
+                
+        except JiraConnectionError:
+            raise
+        except Exception as e:
+            return [], f"Error searching for issues by summary: {str(e)}"
+    
+    def get_issue_url(self, issue_key: str) -> str:
+        """
+        Get the web URL for a Jira issue.
+        
+        Args:
+            issue_key: The issue key
+            
+        Returns:
+            str: Full URL to the issue in Jira web interface
+        """
+        try:
+            # Get the server URL from settings
+            from ..core.config import get_settings
+            settings = get_settings()
+            
+            # Remove /rest/api/2 or similar API paths and trailing slashes
+            server_url = settings.jira_server_url.rstrip('/')
+            if '/rest/api' in server_url:
+                server_url = server_url.split('/rest/api')[0]
+            
+            return f"{server_url}/browse/{issue_key}"
+            
+        except Exception as e:
+            logger.warning(f"Could not generate issue URL for {issue_key}: {e}")
+            return f"Issue: {issue_key}"
+    
     def get_issue(self, issue_key: str) -> Issue:
         """
         Get an issue by its key.

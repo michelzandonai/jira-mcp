@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 
 
 def add_worklog_function(
-    issue_key: str, 
+    issue_identifier: str, 
     time_spent: str, 
     work_date: str = "", 
     description: str = "", 
@@ -27,12 +27,13 @@ def add_worklog_function(
     Adiciona registro de tempo de trabalho a uma issue existente do Jira.
     
     Use esta ferramenta para:
-    - Registrar tempo trabalhado em issues já criadas
+    - Registrar tempo trabalhado em issues já criadas usando chave (PROJ-123) ou nome da issue
     - Documentar trabalho realizado com descrição
     - Manter controle de horas gastas em projetos
+    - Se múltiplas issues corresponderem ao nome, mostra opções para escolher
     
     Args:
-        issue_key: Chave da issue (ex: 'PROJ-123', 'KAN-45')
+        issue_identifier: Chave da issue (ex: 'PROJ-123') ou nome/resumo da issue (ex: 'Remoção de Código')
         time_spent: Tempo gasto (ex: '2h 30m', '1d', '4h', '30m')
         work_date: Data do trabalho no formato YYYY-MM-DD (padrão: hoje)
         description: Descrição do trabalho realizado
@@ -42,12 +43,23 @@ def add_worklog_function(
         str: Resultado da operação de adição de worklog
     """
     try:
-        logger.info(f"Adding worklog to issue: '{issue_key}', time: '{time_spent}', date: '{work_date}'")
+        logger.info(f"Adding worklog to issue: '{issue_identifier}', time: '{time_spent}', date: '{work_date}'")
         
-        # Create worklog input
+        # Get Jira client and worklog service
+        jira_client = get_jira_client()
+        worklog_service = WorklogService(jira_client)
+        
+        # Resolve issue identifier (key or name) to exact issue key
+        resolved_key, message = worklog_service.resolve_issue_identifier(issue_identifier.strip())
+        
+        if not resolved_key:
+            # Either error or multiple options - return the message
+            return message
+        
+        # Create worklog input with resolved issue key
         try:
             worklog_input = WorklogCreateInput(
-                issue_key=issue_key.strip(),
+                issue_key=resolved_key,
                 time_spent=time_spent.strip(),
                 work_date=work_date.strip() if work_date else None,
                 description=description.strip() if description else ""
@@ -55,14 +67,10 @@ def add_worklog_function(
         except Exception as e:
             return f"❌ Invalid input: {str(e)}"
         
-        # Get Jira client and worklog service
-        jira_client = get_jira_client()
-        worklog_service = WorklogService(jira_client)
-        
         # Add worklog
         result = worklog_service.add_worklog_to_issue(worklog_input)
         
-        logger.info(f"Worklog added successfully to {issue_key}")
+        logger.info(f"Worklog added successfully to {resolved_key}")
         
         return result
         

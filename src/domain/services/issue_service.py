@@ -143,6 +143,10 @@ class IssueService:
             assignee_text = f" - {issue.assignee}" if issue.assignee else " - Unassigned"
             type_text = f" ({issue.issue_type})" if issue.issue_type else ""
             
+            # Get issue URL
+            issue_url = self.jira_client.get_issue_url(issue.key)
+            
             lines.append(f"• {issue.key}{status_text}: {issue.summary}{assignee_text}{type_text}")
+            lines.append(f"  🔗 {issue_url}")
         
         return "\n".join(lines)

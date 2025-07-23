@@ -5,7 +5,7 @@ This service handles all worklog-related business logic
 and coordinates with the infrastructure layer.
 """
 
-from typing import Optional
+from typing import Optional, List, Tuple
 from datetime import datetime, date
 from dateutil import parser
 
@@ -69,10 +69,14 @@ class WorklogService:
             )
             
             if success:
+                # Get issue URL
+                issue_url = self.jira_client.get_issue_url(worklog_input.issue_key)
+                
                 success_message = (
                     f"✅ Worklog added successfully to {worklog_input.issue_key}!\n"
                     f"Time: {worklog_input.time_spent}\n"
-                    f"Date: {work_datetime.strftime('%Y-%m-%d')}"
+                    f"Date: {work_datetime.strftime('%Y-%m-%d')}\n"
+                    f"🔗 Link: {issue_url}"
                 )
                 
                 if worklog_input.description:
@@ -134,3 +138,67 @@ class WorklogService:
             return True
         except Exception:
             return False
+    
+    def resolve_issue_identifier(self, issue_identifier: str) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Resolve an issue identifier (key or summary) to an exact issue key.
+        
+        Args:
+            issue_identifier: Issue key (e.g., "PROJ-123") or summary/name
+            
+        Returns:
+            Tuple[Optional[str], Optional[str]]: (issue_key, error_or_choice_message)
+        """
+        try:
+            # First, check if it looks like an issue key (contains dash and uppercase)
+            if '-' in issue_identifier and any(c.isupper() for c in issue_identifier):
+                # Try to get the issue directly
+                try:
+                    issue = self.jira_client.get_issue(issue_identifier)
+                    return issue_identifier, None
+                except:
+                    # If not found, continue to search by summary
+                    pass
+            
+            # Search by summary across all projects
+            issues, error = self.jira_client.search_issues_by_summary(issue_identifier)
+            
+            if error:
+                return None, f"❌ Error searching for issue: {error}"
+            
+            if len(issues) == 0:
+                return None, f"❌ No issues found matching '{issue_identifier}'"
+            
+            if len(issues) == 1:
+                return issues[0].key, None
+            
+            # Multiple issues found - format options for user to choose
+            options = []
+            for issue in issues[:5]:  # Show max 5 options
+                status = getattr(issue.fields.status, 'name', 'Unknown') if hasattr(issue.fields, 'status') else 'Unknown'
+                assignee = "Unassigned"
+                if hasattr(issue.fields, 'assignee') and issue.fields.assignee:
+                    assignee = getattr(issue.fields.assignee, 'displayName', 'Unknown')
+                
+                issue_type = getattr(issue.fields.issuetype, 'name', 'Unknown') if hasattr(issue.fields, 'issuetype') else 'Unknown'
+                issue_url = self.jira_client.get_issue_url(issue.key)
+                
+                options.append(f"• {issue.key} [{status}]: {issue.fields.summary} - {assignee} ({issue_type})\n  🔗 {issue_url}")
+            
+            choice_message = (
+                f"❓ Multiple issues found matching '{issue_identifier}' ({len(issues)} found):\n\n" +
+                "\n".join(options) +
+                f"\n\nPlease specify the exact issue key (e.g., {issues[0].key}) to add the worklog."
+            )
+            
+            if len(issues) > 5:
+                choice_message += f"\n\n... and {len(issues) - 5} more issues found."
+            
+            return None, choice_message
+                
+        except Exception as e:
+            ErrorHandler.handle_service_error(
+                e, "WorklogService", "resolve_issue_identifier", 
+                {"issue_identifier": issue_identifier}
+            )
+            return None, f"❌ Error resolving issue identifier: {str(e)}"
